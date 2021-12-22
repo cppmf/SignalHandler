@@ -1,0 +1,35 @@
+name: MacOS
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    name: Build and test on MacOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure cache
+        uses: actions/cache@v2
+        with:
+          path: "**/cpm_modules"
+          key: ${{ runner.os }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('**/*.cmake') }}
+
+      - name: Build
+        run: |
+          cmake -S test -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=YES
+          cmake --build build --config Debug -j$(nproc)
+
+      - name: Tests
+        working-directory: build
+        run: |
+          ctest --build-config Debug
